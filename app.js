@@ -7,38 +7,40 @@ app.get('/', (req, res) => {
 });
 
 const server = require('http').createServer(app);
-const io = require('socket.io')(server);
-
-io.on('connection', () => {
-    // console.log('a socket.io client connected');
-});
 
 server.listen(process.env.PORT || 3000, () => {
     console.log(`listening on *:${server.address().port}`);
 });
 
-// peer.js config
-const { ExpressPeerServer } = require('peer');
-const peer = ExpressPeerServer(server, {
-    debug: true,
+// socket.io
+const io = require('socket.io')(server);
+
+io.on('connection', (socket) => {
+    console.log(`socket.io client connected: '${socket.id}'`);
+
+    socket.on('test event', (data) => {
+        console.log(data);
+        socket.emit('test event', 'message from server');
+    });
+    // console.log('a socket.io client connected');
+    socket.on('disconnect', () => {
+        console.log(`socket.io client disconnected: '${socket.id}'`);
+    });
+    // io.on('test event', (data) => {
+    // console.log(data);
+    // });
+    // socket.on()
 });
 
-let clients = [];
+// peer.js
+const peer = require('peer').ExpressPeerServer(server);
 
 peer.on('connection', (client) => {
-    if (!clients.includes(client.id)) {
-        clients.push(client.id);
-    }
-
-    io.emit('info', clients);
+    console.log(`peer.js client connected: '${client.id}'`);
 });
 
 peer.on('disconnect', (client) => {
-    if (clients.includes(client.id)) {
-        clients.splice(clients.indexOf(client.id), 1);
-    }
-
-    io.emit('info', clients);
+    console.log(`peer.js client disconnected: '${client.id}'`);
 });
 
 app.use('/peerjs', peer);
