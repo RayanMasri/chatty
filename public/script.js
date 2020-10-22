@@ -1,6 +1,4 @@
-const socket = io(
-    window.location.protocol + '//' + window.location.hostname + ':3000'
-);
+const socket = io();
 const peer = new Peer({
     path: '/peerjs',
     host: location.hostname,
