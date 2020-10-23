@@ -4,20 +4,14 @@ class Voice {
     }
 
     attach(stream) {
-        const audio = new Audio();
+        // preload="auto"
+        var audio = $('<audio autoplay />').appendTo('body')[0];
         audio.srcObject = stream;
-        audio.play();
-
         this.group.push(audio);
     }
 
     clear() {
-        this.group.map((audio) => {
-            audio.srcObject = null;
-            audio.load();
-            audio.play();
-        });
-
+        this.group.map((audio) => (audio.srcObject = null));
         this.group = [];
     }
 
@@ -33,11 +27,32 @@ class Voice {
             });
     }
 
-    uuid4() {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-            var r = (Math.random() * 16) | 0,
-                v = c == 'x' ? r : (r & 0x3) | 0x8;
-            return v.toString(16);
+    devices(callback) {
+        navigator.mediaDevices.enumerateDevices().then((devices) => {
+            const info = {
+                input: {
+                    devices: devices
+                        .filter((e) => e.kind == 'audioinput')
+                        .map((e) => {
+                            return {
+                                label: e.label,
+                                id: e.deviceId,
+                            };
+                        }),
+                },
+                output: {
+                    devices: devices
+                        .filter((e) => e.kind == 'audiooutput')
+                        .map((e) => {
+                            return {
+                                label: e.label,
+                                id: e.deviceId,
+                            };
+                        }),
+                },
+            };
+
+            callback(info);
         });
     }
 }

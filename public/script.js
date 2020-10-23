@@ -10,33 +10,30 @@ const peer = new Peer({
 
 const info = (rooms) => {
     voice.clear();
-    const room = rooms.find((room) => room.members.includes(peer.id));
-    if (room) {
-        const peers = room.members;
+    if (rooms.some((room) => room.members.includes(peer.id))) {
         voice.stream((stream) => {
-            peers
-                .filter((id) => id != peer.id)
-                .map((id) => {
-                    console.log(`calling peer: '${id}'`);
-                    peer.call(id, stream).on('stream', (stream) => {
-                        voice.attach(stream);
-                    });
+            rooms
+                .find((room) => room.members.includes(peer.id))
+                .members.map((id) => {
+                    if (id != peer.id) {
+                        console.log(`calling peer: '${id}'`);
+                        peer.call(id, stream).on('stream', (stream) => {
+                            voice.attach(stream);
+                        });
+                    }
                 });
         });
-        console.log(`connecting to ${peers.length} peers`);
     }
 };
 
 peer.on('call', (call) => {
-    console.log(`received call from: '${call.peer}'`);
     voice.stream((stream) => {
         call.answer(stream);
-        console.log(`answered call from: '${call.peer}'`);
     });
 
     call.on('stream', (stream) => {
         voice.attach(stream);
-        console.log(`attached stream from: '${call.peer}'`);
+        console.log(`answered call from: '${call.peer}'`);
     });
 });
 
