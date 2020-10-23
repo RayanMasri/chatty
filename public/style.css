@@ -1,0 +1,16 @@
+* {
+    user-select: none;
+}
+.channel-label {
+    background-color: gray;
+    border-radius: 5px;
+    color: white;
+    font-size: 25px;
+    transition: 0.2s;
+}
+.channel-label:hover {
+    opacity: 0.5;
+}
+.channel-label:active {
+    opacity: 0.25;
+}

@@ -7,40 +7,67 @@ app.get('/', (req, res) => {
 });
 
 const server = require('http').createServer(app);
+const peer = require('peer').ExpressPeerServer(server);
 
 server.listen(process.env.PORT || 3000, () => {
     console.log(`listening on *:${server.address().port}`);
 });
 
-// socket.io
+app.use('/peerjs', peer);
+
 const io = require('socket.io')(server);
+let rooms = [
+    {
+        label: 'channel 1',
+        members: [],
+    },
+    {
+        label: 'channel 2',
+        members: [],
+    },
+];
 
 io.on('connection', (socket) => {
     console.log(`socket.io client connected: '${socket.id}'`);
 
-    socket.on('test event', (data) => {
-        console.log(data);
-        socket.emit('test event', 'message from server');
+    // socket.io
+    io.emit('info', rooms);
+
+    socket.on('room change', (object) => {
+        const { member, label } = object;
+        rooms = rooms.map((room) =>
+            room.label == label
+                ? {
+                      label: room.label,
+                      members: !room.members.includes(member)
+                          ? room.members.concat([member])
+                          : room.members,
+                  }
+                : room.members.includes(member)
+                ? {
+                      label: room.label,
+                      members: room.members.filter((id) => id != member),
+                  }
+                : room
+        );
+
+        io.emit('info', rooms);
     });
-    // console.log('a socket.io client connected');
+
+    // **
+
     socket.on('disconnect', () => {
         console.log(`socket.io client disconnected: '${socket.id}'`);
     });
-    // io.on('test event', (data) => {
-    // console.log(data);
-    // });
-    // socket.on()
-});
-
-// peer.js
-const peer = require('peer').ExpressPeerServer(server);
-
-peer.on('connection', (client) => {
-    console.log(`peer.js client connected: '${client.id}'`);
 });
 
 peer.on('disconnect', (client) => {
-    console.log(`peer.js client disconnected: '${client.id}'`);
-});
+    rooms = rooms.map((room) => {
+        return {
+            label: room.label,
+            members: room.members.filter((member) => member != client.id),
+        };
+    });
 
-app.use('/peerjs', peer);
+    io.emit('info', rooms);
+});
